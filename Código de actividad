@@ -1,0 +1,113 @@
+import tkinter as tk
+import os
+
+
+class Estudiante:
+    def __init__(self, id, nombre, correo, programa):
+        self.id = id
+        self.nombre = nombre
+        self.correo = correo
+        self.programa = programa
+
+    def __str__(self):
+        return f"{self.id},{self.nombre},{self.correo},{self.programa}"
+
+    @staticmethod
+    def from_string(data):
+        partes = data.strip().split(",")
+        return Estudiante(*partes)
+
+
+class EstudianteDAO:
+    archivo = "estudiantes.txt"
+
+    @staticmethod
+    def crear(est):
+        with open(EstudianteDAO.archivo, "a") as f:
+            f.write(str(est) + "\n")
+
+    @staticmethod
+    def leer_todos():
+        estudiantes = []
+        if os.path.exists(EstudianteDAO.archivo):
+            with open(EstudianteDAO.archivo, "r") as f:
+                for linea in f:
+                    estudiantes.append(Estudiante.from_string(linea))
+        return estudiantes
+
+    @staticmethod
+    def actualizar(est_nuevo):
+        estudiantes = EstudianteDAO.leer_todos()
+        with open(EstudianteDAO.archivo, "w") as f:
+            for est in estudiantes:
+                if est.id == est_nuevo.id:
+                    f.write(str(est_nuevo) + "\n")
+                else:
+                    f.write(str(est) + "\n")
+
+    @staticmethod
+    def eliminar(id):
+        estudiantes = EstudianteDAO.leer_todos()
+        with open(EstudianteDAO.archivo, "w") as f:
+            for est in estudiantes:
+                if est.id != id:
+                    f.write(str(est) + "\n")
+
+
+class EstudianteApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gestión de Estudiantes")
+        self.root.geometry("500x400")
+
+        # Campos de entrada
+        tk.Label(root, text="ID:").grid(row=0, column=0)
+        tk.Label(root, text="Nombre:").grid(row=1, column=0)
+        tk.Label(root, text="Correo:").grid(row=2, column=0)
+        tk.Label(root, text="Programa:").grid(row=3, column=0)
+
+        self.id = tk.Entry(root)
+        self.nombre = tk.Entry(root)
+        self.correo = tk.Entry(root)
+        self.programa = tk.Entry(root)
+
+        self.id.grid(row=0, column=1)
+        self.nombre.grid(row=1, column=1)
+        self.correo.grid(row=2, column=1)
+        self.programa.grid(row=3, column=1)
+
+        # Botones CRUD
+        tk.Button(root, text="Crear", command=self.crear).grid(row=4, column=0)
+        tk.Button(root, text="Leer", command=self.leer).grid(row=4, column=1)
+        tk.Button(root, text="Actualizar", command=self.actualizar).grid(row=5, column=0)
+        tk.Button(root, text="Eliminar", command=self.eliminar).grid(row=5, column=1)
+
+        self.resultado = tk.Text(root, height=10, width=60)
+        self.resultado.grid(row=6, column=0, columnspan=2, padx=10, pady=10)
+
+    # Funciones CRUD
+    def crear(self):
+        est = Estudiante(self.id.get(), self.nombre.get(), self.correo.get(), self.programa.get())
+        EstudianteDAO.crear(est)
+        self.resultado.insert(tk.END, "Estudiante creado.\n")
+
+    def leer(self):
+        self.resultado.delete("1.0", tk.END)
+        estudiantes = EstudianteDAO.leer_todos()
+        for est in estudiantes:
+            self.resultado.insert(tk.END, str(est) + "\n")
+
+    def actualizar(self):
+        est = Estudiante(self.id.get(), self.nombre.get(), self.correo.get(), self.programa.get())
+        EstudianteDAO.actualizar(est)
+        self.resultado.insert(tk.END, "Estudiante actualizado.\n")
+
+    def eliminar(self):
+        EstudianteDAO.eliminar(self.id.get())
+        self.resultado.insert(tk.END, "Estudiante eliminado.\n")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = EstudianteApp(root)
+    root.mainloop()
